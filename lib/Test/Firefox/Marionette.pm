@@ -32,13 +32,6 @@ sub go_ok
     }
 }
 
-sub has_ok
-{
-    my $self = shift;
-    return $self->find_ok(@_) ? 1
-                              : ();
-}
-
 sub find_ok
 {
     my ($self, $xpath, $desc) = @_;
@@ -51,13 +44,6 @@ sub find_ok
 
     pass $desc;
     return $self->SUPER::find($xpath);
-}
-
-sub has_class_ok
-{
-    my $self = shift;
-    return $self->find_class_ok(@_) ? 1
-                                    : ();
 }
 
 sub find_class_ok
@@ -74,13 +60,6 @@ sub find_class_ok
     return $self->SUPER::find_class($class_name);
 }
 
-sub has_id_ok
-{
-    my $self = shift;
-    return $self->find_id_ok(@_) ? 1
-                                 : ();
-}
-
 sub find_id_ok
 {
     my ($self, $id, $desc) = @_;
@@ -93,13 +72,6 @@ sub find_id_ok
 
     pass $desc;
     return $self->SUPER::find_id($id);
-}
-
-sub has_name_ok
-{
-    my $self = shift;
-    return $self->find_name_ok(@_) ? 1
-                                   : ();
 }
 
 sub find_name_ok
@@ -116,13 +88,6 @@ sub find_name_ok
     return $self->SUPER::find_name($name);
 }
 
-sub has_selector_ok
-{
-    my $self = shift;
-    return $self->find_selector_ok(@_) ? 1
-                                       : ();
-}
-
 sub find_selector_ok
 {
     my ($self, $css_selector, $desc) = @_;
@@ -135,13 +100,6 @@ sub find_selector_ok
 
     pass $desc;
     return $self->SUPER::find_selector($css_selector);
-}
-
-sub has_tag_ok
-{
-    my $self = shift;
-    return $self->find_tag_ok(@_) ? 1
-                                  : ();
 }
 
 sub find_tag_ok
@@ -158,13 +116,6 @@ sub find_tag_ok
     return $self->SUPER::find_tag($tag_name);
 }
 
-sub has_link_ok
-{
-    my $self = shift;
-    return $self->find_link_ok(@_) ? 1
-                                   : ();
-}
-
 sub find_link_ok
 {
     my ($self, $text, $desc) = @_;
@@ -177,13 +128,6 @@ sub find_link_ok
 
     pass $desc;
     return $self->SUPER::find_link($text);
-}
-
-sub has_partial_ok
-{
-    my $self = shift;
-    return $self->find_partial_ok(@_) ? 1
-                                      : ();
 }
 
 sub find_partial_ok
@@ -295,11 +239,5 @@ sub loaded_ok
 {
     ...
 }
-
-sub has_content
-{
-    ...
-}
-
 
 1;
