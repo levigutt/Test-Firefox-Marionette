@@ -1,14 +1,18 @@
 package Test::Firefox::Marionette;
-use Firefox::Marionette;
-use Test::More;
+use strict;
+use warnings;
+use 5.0100000;
+
+our $VERSION = '1.70';
+
+use Test::Builder ();
 use List::Util qw<first>;
 use Try::Tiny;
+use Data::Printer;
 
-our @ISA       = qw<Exporter Firefox::Marionette>;
-our @EXPORT    = qw<go_ok follow_link_ok fill_form_ok>;
-our @EXPORT_OK = @EXPORT;
+use parent 'Firefox::Marionette';
 
-require Exporter;
+my $TB = Test::Builder->new();
 
 sub new
 {
@@ -24,11 +28,11 @@ sub go_ok
     try
     {
         $self->go($url);
-        pass $desc;
+        $TB->ok(1, $desc );
     }
     catch
     {
-        fail $desc;
+        $TB->ok(0, $desc );
     }
 }
 
@@ -38,11 +42,11 @@ sub find_ok
     $desc //= sprintf 'check if element by xpath "%s" exist', $xpath;
     unless( $self->SUPER::has($xpath) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find($xpath);
 }
 
@@ -52,11 +56,11 @@ sub find_class_ok
     $desc //= sprintf 'check if element with class "%s" exist', $class_name;
     unless( $self->SUPER::has_class($class_name) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_class($class_name);
 }
 
@@ -66,11 +70,11 @@ sub find_id_ok
     $desc //= sprintf 'check if element by id "%s" exist', $id;
     unless( $self->SUPER::has_id($id) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_id($id);
 }
 
@@ -80,11 +84,11 @@ sub find_name_ok
     $desc //= sprintf 'check if element by id "%s" exist', $name;
     unless( $self->SUPER::has_name($name) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_name($name);
 }
 
@@ -94,11 +98,11 @@ sub find_selector_ok
     $desc //= sprintf 'check if element by selector "%s" exist', $css_selector;
     unless( $self->SUPER::has_selector($css_selector) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_selector($css_selector);
 }
 
@@ -108,11 +112,11 @@ sub find_tag_ok
     $desc //= sprintf 'check if element of tag "%s" exist', $tag_name;
     unless( $self->SUPER::has_tag($tag_name) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_tag($tag_name);
 }
 
@@ -122,11 +126,11 @@ sub find_link_ok
     $desc //= sprintf 'check if link with text "%s" exist', $text;
     unless( $self->SUPER::has_link($text) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_link($text);
 }
 
@@ -136,11 +140,11 @@ sub find_partial_ok
     $desc //= sprintf 'check if link with partial text "%s" exist', $text;
     unless( $self->SUPER::has_partial($text) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
 
-    pass $desc;
+    $TB->ok(1, $desc );
     return $self->SUPER::find_partial($text);
 }
 
@@ -150,10 +154,10 @@ sub await_ok
     $desc //= 'awaiting...';
     unless ( $self->await($cb) )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
-    pass $desc;
+    $TB->ok(1, $desc );
     return 1;
 }
 
@@ -163,19 +167,19 @@ sub follow_link_ok (&;$)
     my ($test_cb, $desc) = @_;
 
     my @links = $self->links;
-    return fail $desc unless @links;
+    return $TB->ok(0, $desc ) unless @links;
 
     my $link = first { $test_cb->() } @links;
-    return fail $desc unless $link;
+    return $TB->ok(0, $desc ) unless $link;
 
     try
     {
         $link->click();
-        pass $desc;
+        $TB->ok(1, $desc );
     }
     catch
     {
-        fail sprintf "%s <%s>", $desc, $_;
+        $TB->ok(0, sprintf "%s <%s>", $desc, $_ );
     }
 }
 
@@ -185,7 +189,8 @@ sub fill_form_ok
     for my $key (keys $fields->%*)
     {
         my $val = $fields->{$key};
-        fail sprintf("%s: missing field %s\n", $desc, $key)
+
+        $TB->ok(0, sprintf("%s: missing field %s\n", $desc, $key) )
             unless $form->has_name($key);
         my $elem = $form->find_name($key);
         if ( grep { ($elem->attribute('type') // '') eq $_ } qw<checkbox radio> )
@@ -197,7 +202,7 @@ sub fill_form_ok
         }
         if ( $elem->tag_name() eq 'select' )
         {
-            fail sprintf("%s: invalid option for %s\n", $desc, $key)
+            $TB->ok(0, sprintf("%s: invalid option for %s\n", $desc, $key) )
                 unless $elem->has_selector(sprintf("option[value='%s']", $val));
             my $opt = $elem->find_selector(sprintf("option[value='%s']", $val));
             $opt->click();
@@ -206,7 +211,7 @@ sub fill_form_ok
         $elem->clear();
         $elem->type($val);
     }
-    pass $desc;
+    $TB->ok(1, $desc );
 }
 
 sub submit_form_ok
@@ -215,18 +220,28 @@ sub submit_form_ok
     $self->fill_form_ok($form, $fields, $desc);
     unless ( $form->has_selector('input[type=submit],button[type=submit]') )
     {
-        fail $desc;
+        $TB->ok(0, $desc );
         return;
     }
     unless ( $self->script('return arguments[0].reportValidity()', args => [ $form ]) )
     {
-        fail sprintf '%s (form validation failed)', $desc;
+        $TB->ok(0, sprintf '%s (form validation failed)', $desc );
         return;
     }
     my $submit = $form->find_selector('input[type=submit],button[type=submit]');
     $submit->click();
 }
 
+sub ok
+{
+    my $self = shift;
+    $TB->ok(@_);
+}
+
+sub done_testing
+{
+    $TB->done_testing();
+}
 
 ## UNIMPLEMENTED
 
@@ -241,3 +256,60 @@ sub loaded_ok
 }
 
 1;
+__END__
+
+=head1 NAME
+
+Test::Firefox::Marionette - Module to test websites with Firefox
+
+=head1 SYNOPSIS
+
+    use Test::Firefox::Marionette;
+
+    my $ff = Test::Firefox::Marionette->new(visible => 1);
+
+    $ff->go_ok('http://example.org');
+
+    $ff->follow_link_ok( sub { $_->text =~ /Log in/ } );
+
+    my $login_form = $ff->find_tag_ok('form');
+    $ff->submit_form_ok( $login_form, { username => "admin", password => "Perl4Ever!" } );
+
+    $ff->done_testing();
+
+=head1 DESCRIPTION
+
+This module is simply a wrapper around Firefox::Marionette, made because WWW::Mechanize::Firefox no longer works.
+
+This is experimental, and the API will be in constant flux, but hopefully lands on implementing much of the same as Test::WWW::Mechanize
+
+
+=head2 EXPORT
+
+None by default.
+
+
+
+=head1 SEE ALSO
+
+Firefox::Marionette
+
+WWW::Mechanize::Firefox
+
+Test::WWW::Mechanize
+
+=head1 AUTHOR
+
+Levi Elias Nystad-Johansen, E<lt>cpan@nystad-johansen.noE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2026 by Levi Elias Nystad-Johansen
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.40.3 or,
+at your option, any later version of Perl 5 you may have available.
+
+
+=cut
+
