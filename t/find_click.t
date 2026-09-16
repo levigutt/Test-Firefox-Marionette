@@ -8,12 +8,12 @@ my $ff = Test::Firefox::Marionette->new();
 
 $ff->go_ok($base . 'elements.html');
 $ff->ok(!$ff->has_tag('custom-square'), 'Square not present at start');
-$ff->find_class_ok('add')->click();
+$ff->click_ok( $ff->find_class_ok('add') );
 $ff->find_ok('//custom-square');
 $ff->find_tag_ok('custom-square');
 $ff->find_link_ok('My Link');
 $ff->find_partial_ok('Link');
-$ff->find_class_ok('remove')->click();
+$ff->click_ok( $ff->find_class_ok('remove') );
 $ff->ok(!$ff->has_tag('custom-square'), 'Square was removed');
 
 $ff->go_ok($base . 'form.html');

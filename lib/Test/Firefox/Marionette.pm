@@ -7,6 +7,7 @@ our $VERSION = '1.70';
 
 use Test::Builder ();
 use List::Util qw<first>;
+use Scalar::Util qw<blessed>;
 use Try::Tiny;
 use Data::Printer;
 
@@ -24,7 +25,7 @@ sub new
 sub go_ok
 {
     my ($self, $url, $desc) = @_;
-    $desc //= sprintf 'could go to %s', $url;
+    $desc //= sprintf 'Go to %s', $url; #TODO: url may be undefined
     try
     {
         $self->go($url);
@@ -32,7 +33,7 @@ sub go_ok
     }
     catch
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
     }
 }
 
@@ -42,7 +43,7 @@ sub find_ok
     $desc //= sprintf 'check if element by xpath "%s" exist', $xpath;
     unless( $self->SUPER::has($xpath) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -56,7 +57,7 @@ sub find_class_ok
     $desc //= sprintf 'check if element with class "%s" exist', $class_name;
     unless( $self->SUPER::has_class($class_name) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -70,7 +71,7 @@ sub find_id_ok
     $desc //= sprintf 'check if element by id "%s" exist', $id;
     unless( $self->SUPER::has_id($id) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -84,7 +85,7 @@ sub find_name_ok
     $desc //= sprintf 'check if element by id "%s" exist', $name;
     unless( $self->SUPER::has_name($name) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -98,7 +99,7 @@ sub find_selector_ok
     $desc //= sprintf 'check if element by selector "%s" exist', $css_selector;
     unless( $self->SUPER::has_selector($css_selector) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -112,7 +113,7 @@ sub find_tag_ok
     $desc //= sprintf 'check if element of tag "%s" exist', $tag_name;
     unless( $self->SUPER::has_tag($tag_name) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -126,7 +127,7 @@ sub find_link_ok
     $desc //= sprintf 'check if link with text "%s" exist', $text;
     unless( $self->SUPER::has_link($text) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -140,7 +141,7 @@ sub find_partial_ok
     $desc //= sprintf 'check if link with partial text "%s" exist', $text;
     unless( $self->SUPER::has_partial($text) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
 
@@ -154,7 +155,7 @@ sub await_ok
     $desc //= 'awaiting...';
     unless ( $self->await($cb) )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
     $TB->ok(1, $desc );
@@ -167,10 +168,10 @@ sub follow_link_ok (&;$)
     my ($test_cb, $desc) = @_;
 
     my @links = $self->links;
-    return $TB->ok(0, $desc ) unless @links;
+    return $TB->ok(0, $desc ) unless @links; #TODO: diag
 
     my $link = first { $test_cb->() } @links;
-    return $TB->ok(0, $desc ) unless $link;
+    return $TB->ok(0, $desc ) unless $link; #TODO: diag
 
     try
     {
@@ -179,7 +180,7 @@ sub follow_link_ok (&;$)
     }
     catch
     {
-        $TB->ok(0, sprintf "%s <%s>", $desc, $_ );
+        $TB->ok(0, sprintf "%s <%s>", $desc, $_ ); #TODO: diag
     }
 }
 
@@ -190,7 +191,7 @@ sub fill_form_ok
     {
         my $val = $fields->{$key};
 
-        $TB->ok(0, sprintf("%s: missing field %s\n", $desc, $key) )
+        $TB->ok(0, sprintf("%s: missing field %s\n", $desc, $key) ) #TODO: diag
             unless $form->has_name($key);
         my $elem = $form->find_name($key);
         if ( grep { ($elem->attribute('type') // '') eq $_ } qw<checkbox radio> )
@@ -202,7 +203,7 @@ sub fill_form_ok
         }
         if ( $elem->tag_name() eq 'select' )
         {
-            $TB->ok(0, sprintf("%s: invalid option for %s\n", $desc, $key) )
+            $TB->ok(0, sprintf("%s: invalid option for %s\n", $desc, $key) ) #TODO: diag
                 unless $elem->has_selector(sprintf("option[value='%s']", $val));
             my $opt = $elem->find_selector(sprintf("option[value='%s']", $val));
             $opt->click();
@@ -220,16 +221,33 @@ sub submit_form_ok
     $self->fill_form_ok($form, $fields, $desc);
     unless ( $form->has_selector('input[type=submit],button[type=submit]') )
     {
-        $TB->ok(0, $desc );
+        $TB->ok(0, $desc ); #TODO: diag
         return;
     }
     unless ( $self->script('return arguments[0].reportValidity()', args => [ $form ]) )
     {
-        $TB->ok(0, sprintf '%s (form validation failed)', $desc );
+        $TB->ok(0, sprintf '%s (form validation failed)', $desc ); #TODO diag
         return;
     }
     my $submit = $form->find_selector('input[type=submit],button[type=submit]');
     $submit->click();
+}
+
+sub click_ok
+{
+    my $self = shift;
+    my ($elem, $desc) = @_;
+    return $TB->ok(0, $desc) unless defined $elem; #TODO: diag
+    $desc //= sprintf "click element %s", $self->_element_to_string($elem);
+    try
+    {
+        $elem->click();
+        $TB->ok( 1, $desc );
+    }
+    catch
+    {
+        $TB->ok(0, sprintf "%s <%s>", $desc, $_ ); #TODO diag
+    }
 }
 
 sub ok
@@ -243,16 +261,22 @@ sub done_testing
     $TB->done_testing();
 }
 
-## UNIMPLEMENTED
-
-sub click_ok()
+sub _element_to_string
 {
-    ...
-}
+    my $self = shift;
+    my ($elem) = @_;
+    return unless defined $elem;    #TODO: warn?
+    return unless blessed($elem) && 'Firefox::Marionette::Element' eq ref($elem); #TODO: warn?
 
-sub loaded_ok
-{
-    ...
+    my $properties = ""; # TODO: use javascript to extract all attributes
+    for my $attr ( qw<id class name> )
+    {
+        if ( my $prop = $elem->property($attr) )
+        {
+            $properties.= sprintf qq{ $_="%s"}, $prop;
+        }
+    }
+    return sprintf "<%s%s>%s</%s>", $elem->tag_name, $properties, $elem->text, $elem->tag_name;
 }
 
 1;
