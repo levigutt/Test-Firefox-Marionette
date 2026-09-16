@@ -300,7 +300,7 @@ Test::WWW::Mechanize
 
 =head1 AUTHOR
 
-Levi Elias Nystad-Johansen, E<lt>cpan@nystad-johansen.noE<gt>
+Levi Elias Nystad-Johansen, E<lt>perl-modules@nystad-johansen.noE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
